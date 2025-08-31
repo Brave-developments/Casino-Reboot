@@ -1,7 +1,7 @@
 local QBCore = exports['qb-core']:GetCoreObject()
 
 -- Ped setup
-local pedModel = `U_F_M_CasinoCash_01`
+local pedModel = "U_F_M_CasinoCash_01"
 local pedCoords = vector3(950.78, 33.56, 71.84)
 local pedHeading = 50.0
 
@@ -17,23 +17,43 @@ Citizen.CreateThread(function()
     FreezeEntityPosition(ped, true)
     SetBlockingOfNonTemporaryEvents(ped, true)
 
-    exports['qb-target']:AddTargetEntity(ped, {
-        options = {
-            {
-                type = "client",
-                event = "casino:client:buyCasinoChip",
-                icon = "fas fa-coins",
-                label = "Buy Casino Chips",
+    if GetResourceState("ox_target") == "started" then
+        exports.ox_target:addLocalEntity(ped, {
+            options = {
+                {
+                    type = "client",
+                    event = "casino:client:buyCasinoChip",
+                    icon = "fas fa-coins",
+                    label = "Buy Casino Chips",
+                },
+                {
+                    type = "client",
+                    event = "casino:client:sellCasinoChip",
+                    icon = "fas fa-coins",
+                    label = "Exchange Casino Chips",
+                },
             },
-            {
-                type = "client",
-                event = "casino:client:sellCasinoChip",
-                icon = "fas fa-coins",
-                label = "Exchange Casino Chips",
+            distance = 10.0
+        })
+    else
+        exports['qb-target']:AddTargetEntity(ped, {
+            options = {
+                {
+                    type = "client",
+                    event = "casino:client:buyCasinoChip",
+                    icon = "fas fa-coins",
+                    label = "Buy Casino Chips",
+                },
+                {
+                    type = "client",
+                    event = "casino:client:sellCasinoChip",
+                    icon = "fas fa-coins",
+                    label = "Exchange Casino Chips",
+                },
             },
-        },
-        distance = 10.0
-    })
+            distance = 10.0
+        })
+    end
 end)
 
 -- Custom input function for getting amount

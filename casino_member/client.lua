@@ -1,7 +1,7 @@
 local QBCore = exports['qb-core']:GetCoreObject()
 
 -- Ped setup
-local pedModel = `u_f_m_casinoshop_01` -- Change to your desired ped model
+local pedModel = "u_f_m_casinoshop_01" -- Change to your desired ped model
 local pedCoords = {
     vector3(920.85, 45.75, 72.07), -- First ped coordinates
     vector3(933.97, 41.53, 81.09)  -- Second ped coordinates
@@ -24,23 +24,43 @@ Citizen.CreateThread(function()
         FreezeEntityPosition(ped, true)
         SetBlockingOfNonTemporaryEvents(ped, true)
 
-        exports['qb-target']:AddTargetEntity(ped, {
-            options = {
-                {
-                    type = "client",
-                    event = "casino:client:buyCasinoMember",
-                    icon = "fas fa-id-card",
-                    label = "Buy a Casino Membership - $5,000",
+        if GetResourceState("ox_target") == "started" then
+            exports.ox_target:addLocalEntity(ped, {
+                options = {
+                    {
+                        type = "client",
+                        event = "casino:client:buyCasinoMember",
+                        icon = "fas fa-id-card",
+                        label = "Buy a Casino Membership - $5,000",
+                    },
+                    {
+                        type = "client",
+                        event = "casino:client:buyCasinoVIP",
+                        icon = "fas fa-star",
+                        label = "Buy a Casino VIP Membership - $50,000",
+                    },
                 },
-                {
-                    type = "client",
-                    event = "casino:client:buyCasinoVIP",
-                    icon = "fas fa-star",
-                    label = "Buy a Casino VIP Membership - $50,000",
+                distance = 3.0 -- Adjust to your preferred distance
+            })
+        else
+            exports['qb-target']:AddTargetEntity(ped, {
+                options = {
+                    {
+                        type = "client",
+                        event = "casino:client:buyCasinoMember",
+                        icon = "fas fa-id-card",
+                        label = "Buy a Casino Membership - $5,000",
+                    },
+                    {
+                        type = "client",
+                        event = "casino:client:buyCasinoVIP",
+                        icon = "fas fa-star",
+                        label = "Buy a Casino VIP Membership - $50,000",
+                    },
                 },
-            },
-            distance = 3.0 -- Adjust to your preferred distance
-        })
+                distance = 3.0 -- Adjust to your preferred distance
+            })
+        end
     end
 end)
 

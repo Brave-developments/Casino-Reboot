@@ -193,8 +193,8 @@ end)
 
 function CheckGender(dealerPed)
 	local models = {
-		[`s_f_y_casino_01`] = "",
-		[`s_m_y_casino_01`] = "female_"
+		["s_f_y_casino_01"] = "",
+		["s_m_y_casino_01"] = "female_"
 	}
 	return models[GetEntityModel(dealerPed)]
 end
@@ -242,9 +242,9 @@ function CreatePeds()
 		-- 	`vw_prop_casino_blckjack_01`,
 		-- 	`vw_prop_casino_blckjack_01b`
 		-- }
-		local model = `vw_prop_casino_3cardpoker_01b`
+		local model = "vw_prop_casino_3cardpoker_01b"
 		if v.highStakes == true then
-			model = `vw_prop_casino_blckjack_01b`
+			model = "vw_prop_casino_blckjack_01b"
 		end
 		if not HasModelLoaded(model) then
 			RequestModel(model)
@@ -264,8 +264,8 @@ function CreatePeds()
 		dealerValue[i] = {}
 		dealerHandObjs[i] = {}
 		local models = {
-			`s_f_y_casino_01`,
-			`s_m_y_casino_01`
+			"s_f_y_casino_01",
+			"s_m_y_casino_01"
 		}
 		local model = models[1]
 		if ((i+6) % 13) < 7 then
@@ -443,7 +443,11 @@ end
 function hideUiOnStart()
 	exports["qb-core"]:HideText()
 	exports['casinoUi']:HideCasinoUi('hide') 
-	exports['qb-menu']:closeMenu() 
+	if GetResourceState("ox_lib") == "started" then
+		lib.hideContext()
+	else
+		exports['qb-menu']:closeMenu()
+	end 
 end
 
 RegisterNetEvent("BLACKJACK:BetReceived")

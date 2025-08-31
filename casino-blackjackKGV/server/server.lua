@@ -159,22 +159,34 @@ RegisterServerEvent("BLACKJACK:SetPlayerBet")
 AddEventHandler('BLACKJACK:SetPlayerBet', SetPlayerBet)
 
 function CheckPlayerBet(i, bet)
-	local Player = QBCore.Functions.GetPlayer(source)
 	local ItemList = {
 		["casino_chip"] = 1,
 	}
-	local playerChips = Player.Functions.GetItemByName("casino_chip")
+	local playerChips = nil
+	if GetResourceState("ox_inventory") == "started" then
+		playerChips = exports.ox_inventory:GetItem(source, "casino_chip", nil, true)
+	elseif GetResourceState("qb-inventory") == "started" then
+		local ok, result = pcall(function()
+			return exports["qb-inventory"]:GetItem(source, "casino_chip")
+		end)
+		if ok and result then
+			playerChips = result
+		else
+			local Player = QBCore.Functions.GetPlayer(source)
+			if Player then
+				playerChips = Player.Functions.GetItemByName("casino_chip")
+			end
+		end
+	else
+		local Player = QBCore.Functions.GetPlayer(source)
+		if Player then
+			playerChips = Player.Functions.GetItemByName("casino_chip")
+		end
+	end
+	
 	local canBet = false
-    if Player.PlayerData.items ~= nil and next(Player.PlayerData.items) ~= nil then
-        for k, v in pairs(Player.PlayerData.items) do
-            if Player.PlayerData.items[k] ~= nil then
-				if ItemList[Player.PlayerData.items[k].name] ~= nil then
-					if playerChips.amount >= bet then
-						canBet = true
-					end
-                end
-            end
-        end
+	if playerChips and playerChips.amount >= bet then
+		canBet = true
 	end
 	TriggerClientEvent("BLACKJACK:BetReceived", source, canBet)
 end
@@ -902,15 +914,30 @@ local ItemList = {
 }
 QBCore.Functions.CreateCallback('BLACKJACKKGV:server:blackChipsAmount', function(source, cb)
     local retval = 0
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player.PlayerData.items ~= nil and next(Player.PlayerData.items) ~= nil then 
-        for k, v in pairs(Player.PlayerData.items) do 
-            if Player.PlayerData.items[k] ~= nil then 
-                if ItemList[Player.PlayerData.items[k].name] ~= nil then 
-                    retval = retval + (ItemList[Player.PlayerData.items[k].name] * Player.PlayerData.items[k].amount)
-                end
+    local playerChips = nil
+    if GetResourceState("ox_inventory") == "started" then
+        playerChips = exports.ox_inventory:GetItem(source, "casino_chip", nil, true)
+    elseif GetResourceState("qb-inventory") == "started" then
+        local ok, result = pcall(function()
+            return exports["qb-inventory"]:GetItem(source, "casino_chip")
+        end)
+        if ok and result then
+            playerChips = result
+        else
+            local Player = QBCore.Functions.GetPlayer(source)
+            if Player then
+                playerChips = Player.Functions.GetItemByName("casino_chip")
             end
-        end 
+        end
+    else
+        local Player = QBCore.Functions.GetPlayer(source)
+        if Player then
+            playerChips = Player.Functions.GetItemByName("casino_chip")
+        end
+    end
+    
+    if playerChips then
+        retval = playerChips.amount
     end
     cb(retval)
 end)
@@ -918,8 +945,28 @@ end)
 function SetExports()
 	exports["casino-blackjackKGV"]:SetGetChipsCallback(function(source)
 		local src = source 
-		local Player = QBCore.Functions.GetPlayer(src)
-		local Chips = Player.Functions.GetItemByName("casino_chip")
+		local Chips = nil
+		if GetResourceState("ox_inventory") == "started" then
+			Chips = exports.ox_inventory:GetItem(src, "casino_chip", nil, true)
+		elseif GetResourceState("qb-inventory") == "started" then
+			local ok, result = pcall(function()
+				return exports["qb-inventory"]:GetItem(src, "casino_chip")
+			end)
+			if ok and result then
+				Chips = result
+			else
+				local Player = QBCore.Functions.GetPlayer(src)
+				if Player then
+					Chips = Player.Functions.GetItemByName("casino_chip")
+				end
+			end
+		else
+			local Player = QBCore.Functions.GetPlayer(src)
+			if Player then
+				Chips = Player.Functions.GetItemByName("casino_chip")
+			end
+		end
+		
 		local minAmount = 10
 		if Chips ~= nil then 
 			if Chips.amount >= minAmount then
@@ -933,24 +980,65 @@ function SetExports()
     end) 
 	
     exports["casino-blackjackKGV"]:SetTakeChipsCallback(function(source, amount)
-		local Player = QBCore.Functions.GetPlayer(source)
-        if Player ~= nil then
-            Player.Functions.RemoveItem("casino_chip", amount)
-            TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items['casino_chip'], "remove", amount)
-        end
+		local success = false
+		if GetResourceState("ox_inventory") == "started" then
+			success = exports.ox_inventory:RemoveItem(source, "casino_chip", amount)
+		elseif GetResourceState("qb-inventory") == "started" then
+			local ok, result = pcall(function()
+				return exports["qb-inventory"]:RemoveItem(source, "casino_chip", amount)
+			end)
+			if ok and result then
+				success = true
+			else
+				local Player = QBCore.Functions.GetPlayer(source)
+				if Player then
+					success = Player.Functions.RemoveItem("casino_chip", amount)
+				end
+			end
+		else
+			local Player = QBCore.Functions.GetPlayer(source)
+			if Player then
+				success = Player.Functions.RemoveItem("casino_chip", amount)
+			end
+		end
+		
+		if success and GetResourceState("qb-inventory") == "started" then
+			TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items['casino_chip'], "remove", amount)
+		end
     end) 
 
     exports["casino-blackjackKGV"]:SetGiveChipsCallback(function(source, amount)
 		local src = source 
-        local Player = QBCore.Functions.GetPlayer(source)
-        if Player ~= nil then
-			if Player.Functions.AddItem('casino_chip', amount, nil, {["quality"] = 100}) then
-				TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["casino_chip"], "add", amount)
-				TriggerClientEvent('QBCore:Notify', src, "You Won "..math.floor(amount).." Casino Chips!")
+		local success = false
+		if GetResourceState("ox_inventory") == "started" then
+			success = exports.ox_inventory:AddItem(src, "casino_chip", amount, {["quality"] = 100})
+		elseif GetResourceState("qb-inventory") == "started" then
+			local ok, result = pcall(function()
+				return exports["qb-inventory"]:AddItem(src, "casino_chip", amount, {["quality"] = 100})
+			end)
+			if ok and result then
+				success = true
 			else
-				TriggerClientEvent('QBCore:Notify', src, 'You have to much in your pockets', 'error')
+				local Player = QBCore.Functions.GetPlayer(src)
+				if Player then
+					success = Player.Functions.AddItem('casino_chip', amount, nil, {["quality"] = 100})
+				end
 			end
-        end
+		else
+			local Player = QBCore.Functions.GetPlayer(src)
+			if Player then
+				success = Player.Functions.AddItem('casino_chip', amount, nil, {["quality"] = 100})
+			end
+		end
+		
+		if success then
+			if GetResourceState("qb-inventory") == "started" then
+				TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items["casino_chip"], "add", amount)
+			end
+			TriggerClientEvent('QBCore:Notify', src, "You Won "..math.floor(amount).." Casino Chips!")
+		else
+			TriggerClientEvent('QBCore:Notify', src, 'You have to much in your pockets', 'error')
+		end
     end)
 end
 

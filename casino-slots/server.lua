@@ -148,15 +148,30 @@ local ItemList = {
 }
 QBCore.Functions.CreateCallback('ry::server:CasinoChipsAmount', function(source, cb)
     local retval = 0
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player.PlayerData.items ~= nil and next(Player.PlayerData.items) ~= nil then 
-        for k, v in pairs(Player.PlayerData.items) do 
-            if Player.PlayerData.items[k] ~= nil then 
-                if ItemList[Player.PlayerData.items[k].name] ~= nil then 
-                    retval = retval + (ItemList[Player.PlayerData.items[k].name] * Player.PlayerData.items[k].amount)
-                end
+    local Item = nil
+    if GetResourceState("ox_inventory") == "started" then
+        Item = exports.ox_inventory:GetItem(source, "casino_chip", nil, true)
+    elseif GetResourceState("qb-inventory") == "started" then
+        local ok, result = pcall(function()
+            return exports["qb-inventory"]:GetItem(source, "casino_chip")
+        end)
+        if ok and result then
+            Item = result
+        else
+            local Player = QBCore.Functions.GetPlayer(source)
+            if Player then
+                Item = Player.Functions.GetItemByName("casino_chip")
             end
         end
+    else
+        local Player = QBCore.Functions.GetPlayer(source)
+        if Player then
+            Item = Player.Functions.GetItemByName("casino_chip")
+        end
+    end
+    
+    if Item then
+        retval = Item.amount
     end
     cb(retval) 
 end)

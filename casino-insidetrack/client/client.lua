@@ -23,21 +23,39 @@ CreateThread(function()
             elseif Config.HorseBetPrompt == 'peek' then
                 text = '<b>The Diamond Casino & Resort Inside Track</b>'
 				exports['qb-core']:DrawText(text)
-                exports['qb-target']:AddCircleZone("Betting", vector3(956.121,70.185,70.433), 1.0, {
-                    name="Betting",
-                    heading=160,
-                    debugPoly=false,
-                    useZ=true,
-                }, {
-                    options = {
-                        {
-                            event = "QBCore:client:openInsideTrack", 
-                            icon = "fas fa-coins",
-                            label = "Start Betting",
+                if GetResourceState("ox_target") == "started" then
+                    exports.ox_target:addSphereZone({
+                        coords = vector3(956.121,70.185,70.433),
+                        radius = 1.0,
+                        options = {
+                            {
+                                name = "Betting",
+                                icon = "fas fa-coins",
+                                label = "Start Betting",
+                                onSelect = function()
+                                    TriggerEvent("QBCore:client:openInsideTrack")
+                                end
+                            }
                         },
-                    },
-                    distance = 3.0 
-                })
+                        distance = 3.0
+                    })
+                else
+                    exports['qb-target']:AddCircleZone("Betting", vector3(956.121,70.185,70.433), 1.0, {
+                        name="Betting",
+                        heading=160,
+                        debugPoly=false,
+                        useZ=true,
+                    }, {
+                        options = {
+                            {
+                                event = "QBCore:client:openInsideTrack", 
+                                icon = "fas fa-coins",
+                                label = "Start Betting",
+                            },
+                        },
+                        distance = 3.0 
+                    })
+                end
             end
         else
 			exports['qb-menu']:closeMenu()

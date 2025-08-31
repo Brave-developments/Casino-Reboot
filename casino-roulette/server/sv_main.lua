@@ -5,37 +5,95 @@ local aktivRulettek = {}
 
 
 function getPlayerChips(source)
-    -- local Player = QBCore.Functions.GetPlayer(source)
-    -- local Chips = Player.Functions.GetItemByName("casino_chip")
-    -- if Chips ~= nil then 
-    --     if Chips.amount >= 10 then
-    --         return Chips.amount 
-    --     else end
-    -- else end
-
-    local Player = QBCore.Functions.GetPlayer(source)
     local retval = 0
-    local Item = Player.Functions.GetItemByName('casino_chip')
-    if Item  then
+    local Item = nil
+    if GetResourceState("ox_inventory") == "started" then
+        Item = exports.ox_inventory:GetItem(source, "casino_chip", nil, true)
+    elseif GetResourceState("qb-inventory") == "started" then
+        local ok, result = pcall(function()
+            return exports["qb-inventory"]:GetItem(source, "casino_chip")
+        end)
+        if ok and result then
+            Item = result
+        else
+            local Player = QBCore.Functions.GetPlayer(source)
+            if Player then
+                Item = Player.Functions.GetItemByName('casino_chip')
+            end
+        end
+    else
+        local Player = QBCore.Functions.GetPlayer(source)
+        if Player then
+            Item = Player.Functions.GetItemByName('casino_chip')
+        end
+    end
+    
+    if Item then
         retval = Item.amount
     end
     return retval
 end
 
 function giveChips(source, amount)
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player.Functions.AddItem("casino_chip", amount, nil, nil, false, GetCurrentResourceName(), "", "", "")  then
-        TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items['casino_chip'], "add")
+    local success = false
+    if GetResourceState("ox_inventory") == "started" then
+        success = exports.ox_inventory:AddItem(source, "casino_chip", amount)
+    elseif GetResourceState("qb-inventory") == "started" then
+        local ok, result = pcall(function()
+            return exports["qb-inventory"]:AddItem(source, "casino_chip", amount)
+        end)
+        if ok and result then
+            success = true
+        else
+            local Player = QBCore.Functions.GetPlayer(source)
+            if Player then
+                success = Player.Functions.AddItem("casino_chip", amount, nil, nil, false, GetCurrentResourceName(), "", "", "")
+            end
+        end
+    else
+        local Player = QBCore.Functions.GetPlayer(source)
+        if Player then
+            success = Player.Functions.AddItem("casino_chip", amount, nil, nil, false, GetCurrentResourceName(), "", "", "")
+        end
+    end
+    
+    if success then
+        if GetResourceState("qb-inventory") == "started" then
+            TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items['casino_chip'], "add")
+        end
         TriggerClientEvent('QBCore:Notify', source, "+ "..amount.." Chips")
     end
 end 
 
 function removeChips(source, amount)
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player.Functions.RemoveItem("casino_chip", amount)  then
-        TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items['casino_chip'], "remove")
+    local success = false
+    if GetResourceState("ox_inventory") == "started" then
+        success = exports.ox_inventory:RemoveItem(source, "casino_chip", amount)
+    elseif GetResourceState("qb-inventory") == "started" then
+        local ok, result = pcall(function()
+            return exports["qb-inventory"]:RemoveItem(source, "casino_chip", amount)
+        end)
+        if ok and result then
+            success = true
+        else
+            local Player = QBCore.Functions.GetPlayer(source)
+            if Player then
+                success = Player.Functions.RemoveItem("casino_chip", amount)
+            end
+        end
+    else
+        local Player = QBCore.Functions.GetPlayer(source)
+        if Player then
+            success = Player.Functions.RemoveItem("casino_chip", amount)
+        end
+    end
+    
+    if success then
+        if GetResourceState("qb-inventory") == "started" then
+            TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items['casino_chip'], "remove")
+        end
         TriggerClientEvent('QBCore:Notify', source, "- "..amount.." Chips")
-    end 
+    end
 end
 
 
@@ -44,15 +102,30 @@ local ItemList = {
 }
 QBCore.Functions.CreateCallback('roulette:server:ChipsAmount', function(source, cb)
     local retval = 0
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player.PlayerData.items ~= nil and next(Player.PlayerData.items) ~= nil then 
-        for k, v in pairs(Player.PlayerData.items) do 
-            if Player.PlayerData.items[k] ~= nil then 
-                if ItemList[Player.PlayerData.items[k].name] ~= nil then 
-                    retval = retval + (ItemList[Player.PlayerData.items[k].name] * Player.PlayerData.items[k].amount)
-                end
+    local Item = nil
+    if GetResourceState("ox_inventory") == "started" then
+        Item = exports.ox_inventory:GetItem(source, "casino_chip", nil, true)
+    elseif GetResourceState("qb-inventory") == "started" then
+        local ok, result = pcall(function()
+            return exports["qb-inventory"]:GetItem(source, "casino_chip")
+        end)
+        if ok and result then
+            Item = result
+        else
+            local Player = QBCore.Functions.GetPlayer(source)
+            if Player then
+                Item = Player.Functions.GetItemByName("casino_chip")
             end
         end
+    else
+        local Player = QBCore.Functions.GetPlayer(source)
+        if Player then
+            Item = Player.Functions.GetItemByName("casino_chip")
+        end
+    end
+    
+    if Item then
+        retval = Item.amount
     end
     cb(retval)
 end)

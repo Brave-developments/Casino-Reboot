@@ -2,32 +2,93 @@ QBCore = exports['qb-core']:GetCoreObject()
 
 
 function getPlayerChips(source)
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player then
-        if Player.Functions.GetItemByName('casino_chip') ~= nil then
-            return Player.Functions.GetItemByName('casino_chip').amount
+    local Item = nil
+    if GetResourceState("ox_inventory") == "started" then
+        Item = exports.ox_inventory:GetItem(source, "casino_chip", nil, true)
+    elseif GetResourceState("qb-inventory") == "started" then
+        local ok, result = pcall(function()
+            return exports["qb-inventory"]:GetItem(source, "casino_chip")
+        end)
+        if ok and result then
+            Item = result
         else
-            return 0
+            local Player = QBCore.Functions.GetPlayer(source)
+            if Player then
+                Item = Player.Functions.GetItemByName('casino_chip')
+            end
         end
+    else
+        local Player = QBCore.Functions.GetPlayer(source)
+        if Player then
+            Item = Player.Functions.GetItemByName('casino_chip')
+        end
+    end
+    
+    if Item then
+        return Item.amount
     else
         return 0
     end
 end
 
 function giveChips(source, amount)
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player then
-        Player.Functions.AddItem("casino_chip", amount, nil, nil, false, GetCurrentResourceName(), "", "", "")
-        TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items['casino_chip'], "add", amount) 
-        updatePlayerChips(source) 
+    local success = false
+    if GetResourceState("ox_inventory") == "started" then
+        success = exports.ox_inventory:AddItem(source, "casino_chip", amount)
+    elseif GetResourceState("qb-inventory") == "started" then
+        local ok, result = pcall(function()
+            return exports["qb-inventory"]:AddItem(source, "casino_chip", amount)
+        end)
+        if ok and result then
+            success = true
+        else
+            local Player = QBCore.Functions.GetPlayer(source)
+            if Player then
+                success = Player.Functions.AddItem("casino_chip", amount, nil, nil, false, GetCurrentResourceName(), "", "", "")
+            end
+        end
+    else
+        local Player = QBCore.Functions.GetPlayer(source)
+        if Player then
+            success = Player.Functions.AddItem("casino_chip", amount, nil, nil, false, GetCurrentResourceName(), "", "", "")
+        end
+    end
+    
+    if success then
+        if GetResourceState("qb-inventory") == "started" then
+            TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items['casino_chip'], "add", amount)
+        end
+        updatePlayerChips(source)
     end
 end
 
 function removeChips(source, amount)
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player then
-        Player.Functions.RemoveItem("casino_chip", amount)
-        TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items['casino_chip'], "remove", amount) 
+    local success = false
+    if GetResourceState("ox_inventory") == "started" then
+        success = exports.ox_inventory:RemoveItem(source, "casino_chip", amount)
+    elseif GetResourceState("qb-inventory") == "started" then
+        local ok, result = pcall(function()
+            return exports["qb-inventory"]:RemoveItem(source, "casino_chip", amount)
+        end)
+        if ok and result then
+            success = true
+        else
+            local Player = QBCore.Functions.GetPlayer(source)
+            if Player then
+                success = Player.Functions.RemoveItem("casino_chip", amount)
+            end
+        end
+    else
+        local Player = QBCore.Functions.GetPlayer(source)
+        if Player then
+            success = Player.Functions.RemoveItem("casino_chip", amount)
+        end
+    end
+    
+    if success then
+        if GetResourceState("qb-inventory") == "started" then
+            TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items['casino_chip'], "remove", amount)
+        end
         updatePlayerChips(source)
     end
 end
