@@ -290,7 +290,6 @@ RegisterNetEvent('ry:Luckywheel:winCar', function(plate)
 		SetVehicleFuelLevel(veh, 100)
 		TriggerEvent("vehiclekeys:client:SetOwner", Config.VehiclePrize)
 		TriggerServerEvent('luckywheel:server:setVehicleOwner')
-		QBCore.Functions.SetVehicleProperties(veh, vehmods)
 	end, Config.VehiclePrize, coords, true)
 end)
 

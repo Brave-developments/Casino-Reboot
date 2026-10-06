@@ -32,7 +32,7 @@ RegisterNetEvent('luckywheel:getwheel', function()
     if Config.LimitedSpins == true then
         local result = exports.oxmysql:scalarSync('SELECT luckywheel_spins FROM players WHERE citizenid = ?', {Player.PlayerData.citizenid})
         
-        if result == '0' then
+        if result == nil or result == 0 or result == '0' then
             TriggerEvent("luckywheel:startwheel", Player, src)
         else
             local currentTime = os.time()
@@ -93,77 +93,83 @@ RegisterNetEvent('luckywheel:startwheel', function(Player, source)
 	end
 end)
 
-RegisterNetEvent('luckywheel:give', function(source, price)
+-- The prize is looked up from Config on the server using the index the client sends,
+-- so a modified client can no longer request an arbitrary reward table.
+RegisterNetEvent('luckywheel:give', function(priceIndex)
 	isRoll = false
+	local src = source
+	if type(priceIndex) ~= 'number' then return end
+	local price = Config.Prices[priceIndex]
+	if not price then return end
 	if price.type == 'car' then
-		TriggerClientEvent("ry:Luckywheel:winCar", source)
-		TriggerClientEvent("chCasinoWall:bigWin", source)
+		TriggerClientEvent("ry:Luckywheel:winCar", src)
+		TriggerClientEvent("chCasinoWall:bigWin", src)
 	elseif price.type == 'item' then
-		TriggerClientEvent("chCasinoWall:bigWin", source)
+		TriggerClientEvent("chCasinoWall:bigWin", src)
 		local success = false
 		if GetResourceState("ox_inventory") == "started" then
-			success = exports.ox_inventory:AddItem(source, price.name, price.count)
+			success = exports.ox_inventory:AddItem(src, price.name, price.count)
 		elseif GetResourceState("qb-inventory") == "started" then
 			local ok, result = pcall(function()
-				return exports["qb-inventory"]:AddItem(source, price.name, price.count)
+				return exports["qb-inventory"]:AddItem(src, price.name, price.count)
 			end)
 			if ok and result then
 				success = true
 			else
 				local Player = QBCore.Functions.GetPlayer(source)
 				if Player then
-					success = Player.Functions.AddItem(price.name, price.count, slot)
+					success = Player.Functions.AddItem(price.name, price.count)
 				end
 			end
 		else
 			local Player = QBCore.Functions.GetPlayer(source)
 			if Player then
-				success = Player.Functions.AddItem(price.name, price.count, slot)
+				success = Player.Functions.AddItem(price.name, price.count)
 			end
 		end
 		
 		if success then
 			if GetResourceState("qb-inventory") == "started" then
-				TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items[price.name], "add", price.count)
+				TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[price.name], "add", price.count)
 			end
-			TriggerClientEvent('QBCore:Notify', source, "Congratulations! You won "..price.count.." "..price.name.."!", 'success')
+			TriggerClientEvent('QBCore:Notify', src, "Congratulations! You won "..price.count.." "..price.name.."!", 'success')
 		end
 	elseif price.type == 'money' then
-		TriggerClientEvent("chCasinoWall:bigWin", source)
-		local Player = QBCore.Functions.GetPlayer(source)
+		TriggerClientEvent("chCasinoWall:bigWin", src)
+		local Player = QBCore.Functions.GetPlayer(src)
 		if Player then
 			Player.Functions.AddMoney('bank', tonumber(price.count), 'banking-quick-depo')
 		end
-		TriggerClientEvent('QBCore:Notify', source, "Congratulations! You won $"..price.count, 'success')
+		TriggerClientEvent('QBCore:Notify', src, "Congratulations! You won $"..price.count, 'success')
 	elseif price.type == 'weapon' then
-		TriggerClientEvent("chCasinoWall:bigWin", source)
+		TriggerClientEvent("chCasinoWall:bigWin", src)
 		local success = false
 		if GetResourceState("ox_inventory") == "started" then
-			success = exports.ox_inventory:AddItem(source, price.name, 1)
+			success = exports.ox_inventory:AddItem(src, price.name, 1)
 		elseif GetResourceState("qb-inventory") == "started" then
 			local ok, result = pcall(function()
-				return exports["qb-inventory"]:AddItem(source, price.name, 1)
+				return exports["qb-inventory"]:AddItem(src, price.name, 1)
 			end)
 			if ok and result then
 				success = true
 			else
 				local Player = QBCore.Functions.GetPlayer(source)
 				if Player then
-					success = Player.Functions.AddItem(price.name, 1, slot)
+					success = Player.Functions.AddItem(price.name, 1)
 				end
 			end
 		else
 			local Player = QBCore.Functions.GetPlayer(source)
 			if Player then
-				success = Player.Functions.AddItem(price.name, 1, slot)
+				success = Player.Functions.AddItem(price.name, 1)
 			end
 		end
 		
 		if success then
 			if GetResourceState("qb-inventory") == "started" then
-				TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items[price.name], "add", 1)
+				TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[price.name], "add", 1)
 			end
-			TriggerClientEvent('QBCore:Notify', source, "Congratulations! You won a Pistol!", 'success')
+			TriggerClientEvent('QBCore:Notify', src, "Congratulations! You won a Pistol!", 'success')
 		end
 	end
 	TriggerClientEvent("luckywheel:rollFinished", -1)
