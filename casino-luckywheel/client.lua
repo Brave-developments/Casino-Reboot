@@ -206,7 +206,8 @@ RegisterNetEvent("luckywheel:startroll", function(s, index, p)
 		SetEntityVisible(_arrow1, t, 0)
 		if i == 5 then
 			if s == GetPlayerServerId(PlayerId()) then
-				TriggerServerEvent('luckywheel:give', s, p)
+				-- send only the prize index; the server looks it up in Config itself
+				TriggerServerEvent('luckywheel:give', index)
 			end
 		end
 	end
@@ -290,7 +291,6 @@ RegisterNetEvent('ry:Luckywheel:winCar', function(plate)
 		SetVehicleFuelLevel(veh, 100)
 		TriggerEvent("vehiclekeys:client:SetOwner", Config.VehiclePrize)
 		TriggerServerEvent('luckywheel:server:setVehicleOwner')
-		QBCore.Functions.SetVehicleProperties(veh, vehmods)
 	end, Config.VehiclePrize, coords, true)
 end)
 
